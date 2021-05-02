@@ -1,5 +1,5 @@
 class medicamento:
-    def __init__(self,nombre,precio,descripcion,cantidad,tipo,Id,IdProducto):
+    def __init__(self,nombre,precio,descripcion,cantidad,tipo,Id,IdProducto,vendido):
         self.nombre = nombre
         self.precio = precio
         self.descripcion = descripcion
@@ -7,6 +7,7 @@ class medicamento:
         self.tipo = tipo
         self.Id = Id
         self.IdProducto = IdProducto
+        self.vendido = vendido
 
     def getIdProducto(self):
         return self.IdProducto
@@ -16,6 +17,10 @@ class medicamento:
     def getNombre(self):
         return self.nombre
     
+    def getVendido(self):
+        return self.vendido
+    def setVendido(self,vendido):
+        self.vendido = vendido
     def getPrecio(self):
         return self.precio
     
@@ -47,3 +52,6 @@ class medicamento:
 
     def setTipo(self,tipo):
         self.tipo = tipo
+
+    def __gt__(self, medicamento):
+        return self.vendido > medicamento.vendido    

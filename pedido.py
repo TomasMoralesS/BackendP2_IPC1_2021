@@ -1,5 +1,3 @@
-from medicamento import medicamento
-
 class pedido:
     def __init__(self,comprador,medicamentos,Id,seguir):
         self.comprador = comprador

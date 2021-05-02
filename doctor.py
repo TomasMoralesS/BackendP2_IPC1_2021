@@ -4,7 +4,7 @@ class doctor:
     # __init__ sera nuestro metodo que se ejecuta al crear un objeto
     # self, hace referencia al objeto actual    
     
-    def __init__(self,nombre,apellido,fecha,sexo,Username,contra,especialidad,tel,tipo,seteo):
+    def __init__(self,nombre,apellido,fecha,sexo,Username,contra,especialidad,tel,tipo,seteo,citas):
         self.nombre = nombre
         self.apellido = apellido
         self.fecha = fecha
@@ -15,13 +15,17 @@ class doctor:
         self.tipo = tipo
         self.especialidad = especialidad
         self.seteo =seteo
+        self.citas = citas
     # METODOS GET
     # Creamos nuestros metodos para obtener la informacion, usando self
     def getSeteo(self):
         return self.seteo
     def setSeteo(self,seteo):
         self.seteo = seteo
-
+    def getCitas(self):
+        return self.citas
+    def setCitas(self,citas):
+        self.citas = citas
     def getNombre(self):
         return self.nombre
     
@@ -78,3 +82,6 @@ class doctor:
 
     def setTipo(self,tipo):
         self.tipo = tipo
+
+    def __gt__(self, doctor):
+        return self.citas > doctor.citas

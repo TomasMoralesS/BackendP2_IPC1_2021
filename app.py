@@ -8,6 +8,9 @@ from paciente import paciente
 from medicamento import medicamento
 from pedido import pedido
 from cita import cita
+from factura import factura
+from receta import receta
+from enfermedad import enfermedad
 from datetime import timedelta
 import json
 #Flask -> Nos sirve para crear la aplicacion servidor
@@ -20,6 +23,8 @@ doctors = []
 enfermeras = []
 medicamentos = []
 citas = []
+recetas =[]
+enfermedades = []
 #Los pedidos son los medicamentos que el paciente quiere comprar pero que aun no estan confirmados
 #es decir puede cancelar algun medicamento del pedido asi que el estado de compra no es definido
 pedidos = []
@@ -27,7 +32,7 @@ pedidos = []
 #Las Compras son los pedidos que fueron confirmados es decir lo que ya se confirmo por comprar.
 
 Compras = []
-
+facturas = []
 app = Flask(__name__)
 CORS(app)
 Id = 1
@@ -36,15 +41,32 @@ IdProducto = 1
 date = "1999,10,14"
 date1 = "2000, 12, 18"
 date2 = "1999, 4, 5"
-
 admins.append(admin('Abner','Cardona',date,"M","admin","1234","",0,True))
 admins.append(admin('Tomas Alexander','Morales Saquic',date,"M","201900364","MI CUI","42771650",0,True))
+'''
+Top 5 medicamentos más vendidos
+• Top 3 doctores con más citas atendidas
+• Enfermedades más comunes (se especificará en módulo de doctores)
+'''
+'''
+medicamentos.append(medicamento("Medicina1",12,"Medicina y ya compa",40,4,12,0,1))
+medicamentos.append(medicamento("Medicina2",12,"Medicina y ya compa",30,4,12,0,2))
+medicamentos.append(medicamento("Medicina3",12,"Medicina y ya compa",20,4,12,0,3))
+medicamentos.append(medicamento("Medicina4",12,"Medicina y ya compa",10,4,12,0,4))
+medicamentos.append(medicamento("Medicina5",12,"Medicina y ya compa",50,4,12,0,5))
+
+enfermedades.append(enfermedad("gripe",1))
+enfermedades.append(enfermedad("Tos",2))
+enfermedades.append(enfermedad("Dolor Estomacal",3))
+
 pacientes.append(paciente('Pancha','Lopez',date1,"F","uno","contra","",3,False))
 enfermeras.append(enfermera("NuevaEnfermera1","Apellido1",date2,'F',"PruebaEnfermera1","1234","",2,True))
 enfermeras.append(enfermera("NuevaEnfermera2","Apellido1",date2,'F',"PruebaEnfermera2","1234","",2,True))
-doctors.append(doctor("TOMAS","MORALES",date1,'M',"PruebaDoctor1",1234,"especialidadDePrueba1","",1,True))
-doctors.append(doctor("MARIANA","GONZALES",date1,'F',"PruebaDoctor2",1234,"especialidadDePrueba2","12341234",1,True))
-'''
+doctors.append(doctor("TOMAS","MORALES",date1,'M',"PruebaDoctor1","1234","especialidadDePrueba1","",1,True,1))
+doctors.append(doctor("MARIANA","GONZALES",date1,'F',"PruebaDoctor2","1234","especialidadDePrueba2","12341234",1,True,2))
+doctors.append(doctor("Adelayda","SAQUIC",date1,'F',"PruebaDoctor3","1234","especialidadDePrueba3 Y AGREGUEMOS MAS POR MAMONES XD","12341234",1,True,3))
+
+
 pacientes.append(paciente('Pancha','Lopez',date1,"F","uno","contra","",3))
 doctors.append(doctor("Diego","Morales",date2,"M","Dieguin","diegomorales","Cirugia","12345678",1))
 enfermeras.append(enfermera("Adelayda","Morales",date,"F","Marisita","shrek","",2))
@@ -78,7 +100,7 @@ def agregar():
         tel = request.json['tel']
         tipo = request.json['tipo']
         especialidad = request.json['especialidad']
-        doctors.append(doctor(nombre, apellido, fecha, sexo, Username, contra, especialidad,tel,tipo,True))
+        doctors.append(doctor(nombre, apellido, fecha, sexo, Username, contra, especialidad,tel,tipo,True,0))
 
     if request.json['tipo'] == 2:
         nombre = request.json['nombre']
@@ -99,7 +121,7 @@ def agregar():
         tipo = request.json['tipo']
         identificador = Id
         Id = Id +1
-        medicamentos.append(medicamento(nombre,precio,descripcion,cantidad,tipo,identificador,0))
+        medicamentos.append(medicamento(nombre,precio,descripcion,cantidad,tipo,identificador,0,0))
         
     if request.json['tipo'] == 5:
         Npaciente= request.json['Npaciente']
@@ -181,7 +203,6 @@ def getUsername():
     return(jsonify(Datos))
 
 @app.route('/Personas/<string:nombre>', methods=['GET'])
-# Luego para definir el metodo, hay que agregar el nombreVar como parametro del metodo
 def ObtenerPersona(nombre): 
     
     # Referencia al arreglo global
@@ -485,7 +506,8 @@ def getDoctores():
             'Contrasenia': admin.getContra(),
             'especialidad':admin.getEspecialidad(),
             'tel':admin.getTel(),
-            'tipo':admin.getTipo()
+            'tipo':admin.getTipo(),
+            'citas':admin.getCitas()
         }
         Datos.append(objeto)
 
@@ -573,12 +595,15 @@ def descontar(nombre):
                                     if str(pedidos[K].getComprador()) == str(user) and pedidos[K].getSeguir() == True:
                                         #print("aca entramos UNO")
                                         nuevo = False
-                                        Amedicamento = medicamento(medicamentos[j].getNombre(),medicamentos[j].getPrecio(),medicamentos[j].getDescripcion(),1,medicamentos[j].getTipo(),medicamentos[j].getId(),IdProducto)
+                                        Amedicamento = medicamento(medicamentos[j].getNombre(),medicamentos[j].getPrecio(),medicamentos[j].getDescripcion(),1,medicamentos[j].getTipo(),medicamentos[j].getId(),IdProducto,0)
                                         temp = pedidos[K].getMedicamentos()
                                         IdProducto = int(IdProducto+1)
                                         temp.append(Amedicamento)
                                         pedidos[K].setMedicamentos(temp) 
                                         medicamentos[j].setCantidad(int(medicamentos[j].getCantidad()) - 1 )
+                                        aux =int(medicamentos[j].getVendido())+1
+                                        medicamentos[j].setVendido(aux)
+
                                         #print("aca salimos UNO")
                                         #print("ahora quedan "+str(medicamentos[j].getCantidad()))
                                         return jsonify({'Mensaje':'true'})
@@ -586,12 +611,14 @@ def descontar(nombre):
                                     
 
                             if nuevo:
-                                Amedicamento = medicamento(medicamentos[j].getNombre(),medicamentos[j].getPrecio(),medicamentos[j].getDescripcion(),1,medicamentos[j].getTipo(),medicamentos[j].getId(),IdProducto)
+                                Amedicamento = medicamento(medicamentos[j].getNombre(),medicamentos[j].getPrecio(),medicamentos[j].getDescripcion(),1,medicamentos[j].getTipo(),medicamentos[j].getId(),IdProducto,0)
                                 IdProducto = int(IdProducto+1)
                                 listaMedicamentos.append(Amedicamento)
                                 pedidos.append(pedido(user,listaMedicamentos,IdComprador,True))
                                 IdComprador = int(IdComprador+1)
                                 medicamentos[j].setCantidad (int(medicamentos[j].getCantidad()) - 1 )
+                                aux =int(medicamentos[j].getVendido())+1
+                                medicamentos[j].setVendido(aux)
                                 #print("aca salimos DOS")
                                 #print("ahora quedan "+str(medicamentos[j].getCantidad()))
                                 return jsonify({'Mensaje':'true'})
@@ -599,12 +626,14 @@ def descontar(nombre):
                                     
                         else:
                             #print("aca vamos campeon")
-                            Amedicamento = medicamento(medicamentos[j].getNombre(),medicamentos[j].getPrecio(),medicamentos[j].getDescripcion(),1,medicamentos[j].getTipo(),medicamentos[j].getId(),IdProducto)
+                            Amedicamento = medicamento(medicamentos[j].getNombre(),medicamentos[j].getPrecio(),medicamentos[j].getDescripcion(),1,medicamentos[j].getTipo(),medicamentos[j].getId(),IdProducto,0)
                             IdProducto = int(IdProducto+1)
                             listaMedicamentos.append(Amedicamento)
                             pedidos.append(pedido(user,listaMedicamentos,IdComprador,True))
                             IdComprador = int(IdComprador+1)
                             medicamentos[j].setCantidad (int(medicamentos[j].getCantidad()) - 1 )
+                            aux =int(medicamentos[j].getVendido())+1
+                            medicamentos[j].setVendido(aux)
                             #print("ahora quedan "+str(medicamentos[j].getCantidad()))
                             return jsonify({'Mensaje':'true'})
 
@@ -662,6 +691,8 @@ def EliminarCompra(nombre):
                         for k in range(len(medicamentos)):
                             if lista[j].getId() == medicamentos[k].getId():
                                 medicamentos[k].setCantidad(int(medicamentos[k].getCantidad())+1)
+                                aux =int(medicamentos[k].getVendido())-1
+                                medicamentos[j].setVendido(aux)
                                 del lista[j]
                                 pedidos[i].setMedicamentos(lista)
                                 return jsonify({'Mensaje':'0'})
@@ -748,6 +779,135 @@ def ConsumirCita(data):
                     return jsonify({'Mensaje':'1'})    
 
     return jsonify({'Mensaje':'2'})      
+
+@app.route('/Facturacion', methods=['POST'])
+def facturar():
+    global facturas,doctors
+    paciente = request.json['paciente']
+    doc = request.json['doctor']
+    PConsulta = request.json['PConsulta']
+    POperacion = request.json['POperacion']
+    PInternado = request.json['PInternado']
+    total = request.json['Total']
+    fecha = request.json['fecha']
+    facturas.append(factura(paciente,doc,PConsulta,POperacion,PInternado,total,fecha))
+    return jsonify({'Mensaje':'0'})
+            
+@app.route('/Facturas', methods=['GET'])
+def getFact():
+    global facturas
+    Datos = []
+    
+    for doc in facturas:
+        objeto0 = {
+            'fecha':doc.getFecha(),
+            'paciente' : doc.getPaciente(),
+            'doctor' : doc.getDoctor(),
+            'Consulta' : doc.getPConsulta(),
+            'Operacion' : doc.getPOperacion(),
+            'Internacion' : doc.getPInterno(),
+            'Total' : doc.getTotal()
+        }
+        Datos.append(objeto0)
+
+    return(jsonify({'Citas':Datos}))
+
+@app.route('/recetas', methods=['POST'])
+def agregarReceta():
+    global recetas,enfermedades
+    #self,paciente,doctor,fecha,padecimiento,descripcion,contador
+    aux = request.json['padecimiento']
+    padecimiento = aux.lower()
+    padecimiento = padecimiento.replace(" ", "")
+    paciente = request.json['paciente']
+    doctor = request.json['doctor']
+    descripcion = request.json['descripcion']
+    fecha = request.json['fecha']
+
+    if len(enfermedades)>0:
+        cont = True
+        for pivote in enfermedades:
+            if str(pivote.getNombre()) == str(padecimiento):
+                cont = False
+                pivote.setContador(int(pivote.getContador() + 1))
+                recetas.append(receta(paciente,doctor,fecha,padecimiento,descripcion))
+                return jsonify({'Mensaje':'0'})
+        if cont:
+            recetas.append(receta(paciente,doctor,fecha,padecimiento,descripcion))
+            enfermedades.append(enfermedad(padecimiento,1))
+            return jsonify({'Mensaje':'0'})
+            
+    else:
+        recetas.append(receta(paciente,doctor,fecha,padecimiento,descripcion))
+        enfermedades.append(enfermedad(padecimiento,1))
+        return jsonify({'Mensaje':'0'})
+
+@app.route('/CompletarCita/<string:nombre>', methods=['PUT'])
+def ActualizarCita(nombre):
+    global citas,pacientes,doctors
+    for cita in citas:
+        if str(cita.getPaciente()) == str(nombre):
+            if(int(cita.getEstado()) == 1):
+                aux = request.json['estado']
+                cita.setEstado(int (aux))
+                for aux in doctors:
+                    data = cita.getDoctor().split(',')
+                    if str(aux.getUsername()) == str(data[0]):
+                        pivote = int(aux.getCitas()) +1
+                        aux.setCitas(pivote)
+                        return jsonify({'Mensaje':'0'})
+
+@app.route('/Reportes/<int:data>', methods=['GET'])
+def Dreportes(data):    
+    global medicamentos,doctors,enfermedades
+    Datos = []
+    if data == 1:
+        if len(medicamentos)>=5:
+            Ordenado = sorted(medicamentos, reverse=True)
+            #,nombre,precio,descripcion,cantidad,tipo,Id,IdProducto,vendido
+            for i in range(0,5):
+                objeto = {
+                'nombre':Ordenado[i].getNombre(),
+                'precio':Ordenado[i].getPrecio(),
+                'descripcion':Ordenado[i].getDescripcion(),
+                'cantidad':Ordenado[i].getCantidad(),
+                'vendido':Ordenado[i].getVendido()
+                }
+                Datos.append(objeto)
+            return(jsonify({'Lista':Datos}))
+        else:
+            return(jsonify({'Lista':'0'}))
+
+    if data == 2:
+        if len(doctors)>=3:
+            Ordenado = sorted(doctors, reverse=True)
+            for i in range (0,3):
+                #nombre,apellido,especialidad,usuario,citas
+                objeto = {
+                    'nombre' : Ordenado[i].getNombre(),
+                    'apellido' : Ordenado[i].getApellido(),
+                    'usuario' : Ordenado[i].getUsername(),
+                    'citas' : Ordenado[i].getCitas(),
+                    'especialidad' : Ordenado[i].getEspecialidad() 
+                }
+                Datos.append(objeto)
+            return(jsonify({'Lista':Datos}))
+        else:
+            return(jsonify({'Lista':'0'}))
+
+    if data == 3:
+        if len(enfermedades)>=3:
+            Ordenado = sorted(enfermedades, reverse=True)
+            #enfermedad,contador
+            for i in range (0,3):
+                objeto = {
+                    'enfermedad' : Ordenado[i].getNombre(),
+                    'contador' : Ordenado[i].getContador()
+                }
+                Datos.append(objeto)
+            return(jsonify({'Lista':Datos}))
+        else:
+            return(jsonify({'Lista':'0'}))
 
 if __name__ == '__main__':
     app.run(debug = True, port = 3000)
